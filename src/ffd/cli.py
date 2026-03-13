@@ -106,7 +106,10 @@ def run(  # noqa: PLR0913 - CLI entry point
 
     mtp_values = _parse_mtp(mtp)
     resolved_token = resolve_hf_token(hf_token)
-    invocation = " ".join(shlex.quote(arg) for arg in sys.argv)
+    program = Path(sys.argv[0]).name or "ffd"
+    invocation = " ".join(
+        [shlex.quote(program), *(shlex.quote(arg) for arg in sys.argv[1:])]
+    )
 
     try:
         config = RunConfig(
