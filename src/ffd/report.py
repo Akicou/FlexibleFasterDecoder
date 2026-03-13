@@ -29,6 +29,7 @@ class ReportWriter:
         dataset_lines = [
             f"- {card.name} ({card.hf_repo})" for card in spec.dataset_cards
         ]
+        dataset_keys = [card.hf_repo for card in spec.dataset_cards]
 
         head_list = [str(m["head"]) for m in metric_dicts]
         invocation = spec.invocation or "ffd run ..."
@@ -36,13 +37,30 @@ class ReportWriter:
         if metric_dicts:
             first_head = metric_dicts[0]["head"]
             example_path = (
-                self.run_dir
-                / "artifacts"
-                / f"head-{first_head}"
-                / f"spec_head-{first_head}.safetensors"
-            ).as_posix()
+                f"artifacts/head-{first_head}/spec_head-{first_head}.safetensors"
+            )
+
+        metadata_lines = [
+            "---",
+            "license: other",
+            "library_name: transformers",
+            "pipeline_tag: text-generation",
+            f"base_model: {spec.base_model}",
+            "tags:",
+            "  - speculative-decoding",
+            "  - multi-token-prediction",
+            "  - flexible-faster-decoder",
+            "  - ffd",
+            "language:",
+            "  - en",
+            "datasets:",
+            *[f"  - {key}" for key in dataset_keys],
+            "---",
+            "",
+        ]
 
         markdown_lines = [
+            *metadata_lines,
             "# FlexibleFasterDecoder Run",
             "",
             f"**Base model:** {spec.base_model}",
