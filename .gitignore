@@ -1,0 +1,28 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Packaging
+*.egg-info/
+dist/
+build/
+
+# Local runs & artifacts
+runs/
+
+# Logs
+*.log
+train.err
+train.log
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Credentials (keep out of git)
+.env
+.env.*
