@@ -17,7 +17,12 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 from torch.utils.data import DataLoader
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    PretrainedConfig,
+)
 
 from .banner import BannerFactory
 from .config import RunConfig
@@ -59,6 +64,9 @@ class TrainingOrchestrator:
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         config = AutoConfig.from_pretrained(self.config.base_model)
+        hidden_size, vocab_size, max_position_embeddings = self._extract_model_specs(
+            config
+        )
         base_model = AutoModelForCausalLM.from_pretrained(
             self.config.base_model,
             torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
@@ -100,14 +108,12 @@ class TrainingOrchestrator:
                 head_dir = ensure_dir(artifacts_dir / f"head-{head}")
                 head_config = HeadConfig(
                     head=head,
-                    hidden_size=config.hidden_size,
-                    vocab_size=config.vocab_size,
+                    hidden_size=hidden_size,
+                    vocab_size=vocab_size,
                     base_model=self.config.base_model,
                     tokenizer=tokenizer.name_or_path,
                     pad_token_id=tokenizer.pad_token_id,
-                    max_position_embeddings=getattr(
-                        config, "max_position_embeddings", None
-                    ),
+                    max_position_embeddings=max_position_embeddings,
                 )
                 metrics.append(
                     self._train_head(
@@ -143,6 +149,31 @@ class TrainingOrchestrator:
             batch_size=self.config.batch_size,
             shuffle=True,
         )
+
+    def _extract_model_specs(
+        self, config: PretrainedConfig
+    ) -> tuple[int, int, int | None]:
+        text_config = getattr(config, "text_config", None)
+        hidden_size = getattr(config, "hidden_size", None)
+        vocab_size = getattr(config, "vocab_size", None)
+        max_position_embeddings = getattr(config, "max_position_embeddings", None)
+
+        if hidden_size is None and text_config is not None:
+            hidden_size = getattr(text_config, "hidden_size", None)
+        if vocab_size is None and text_config is not None:
+            vocab_size = getattr(text_config, "vocab_size", None)
+        if max_position_embeddings is None and text_config is not None:
+            max_position_embeddings = getattr(
+                text_config, "max_position_embeddings", None
+            )
+
+        if hidden_size is None or vocab_size is None:
+            raise RuntimeError(
+                "Incompatible base model: missing hidden_size and/or vocab_size. "
+                "Ensure the checkpoint is a causal LM exposing text hidden states (often under text_config)."
+            )
+
+        return hidden_size, vocab_size, max_position_embeddings
 
     def _train_head(
         self,

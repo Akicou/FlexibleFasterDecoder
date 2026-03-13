@@ -131,7 +131,11 @@ def run(  # noqa: PLR0913 - CLI entry point
         raise typer.Exit(code=1) from exc
 
     orchestrator = TrainingOrchestrator(config, console=console)
-    result = orchestrator.execute()
+    try:
+        result = orchestrator.execute()
+    except RuntimeError as exc:
+        console.print(f"[bold red]Model compatibility error:[/bold red] {exc}")
+        raise typer.Exit(code=1) from exc
 
     table = Table(title="Head Metrics")
     table.add_column("Head", justify="center")
