@@ -65,5 +65,17 @@ class BannerFactory:
             (48, 320), "Speculative decoding ready", font=font_body, fill="#E2E8F0"
         )
 
+        watermark = "github.com/Akicou/FlexibleFasterDecoder"
+        bbox = draw.textbbox((0, 0), watermark, font=font_body)
+        wm_width = bbox[2] - bbox[0]
+        wm_height = bbox[3] - bbox[1]
+        margin = 32
+        draw.text(
+            (self.width - wm_width - margin, self.height - wm_height - margin),
+            watermark,
+            font=font_body,
+            fill="#CBD5E1",
+        )
+
         image.save(banner_path, format="PNG")
         return banner_path
