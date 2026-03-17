@@ -2,6 +2,8 @@
 
 A modern, GPU-first CLI for training speculative decoding heads (multi-token prediction / MTP, à la Eagle3) on Mixture-of-Experts LLMs. FlexibleFasterDecoder (FFD) orchestrates dataset hydration, tokenization, head fine-tuning, artifact/report generation, and optional Hugging Face publishing in one workflow.
 
+> Most of the code is still pseudo code. do not use in any production environemnt. This Repo merely serves as a staged idea
+
 ## Highlights
 
 - **Real speculative heads** → `.safetensors` ready for vLLM-style speculators.
